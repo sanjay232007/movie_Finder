@@ -2,7 +2,7 @@ import { useEffect,useState } from 'react'
 
 import {useDebounce} from 'react-use'
 
-import { updateSearchCount } from './appwrite.js'
+import { updateSearchCount ,getTrendingMovies } from './appwrite.js'
 
 import './App.css'
 import BG from '/BG.png'
@@ -45,6 +45,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [movieList, setMovieList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [trendingMovies, setTrendingMovies] = useState([]);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
 
@@ -97,7 +98,20 @@ const fetchMovies = async (query ='') => {
     }
   }
 
+const loadTrendingMovies = async () => {
 
+  try {
+    const movies = await getTrendingMovies();
+
+    setTrendingMovies(movies);
+  }
+
+  catch (error) {
+    console.error(error," Error fetching trending movies");
+  }
+
+
+}
 
  useEffect(() => {
 fetchMovies(debouncedSearchTerm);
@@ -105,7 +119,9 @@ fetchMovies(debouncedSearchTerm);
 },[debouncedSearchTerm])
 
 
-
+useEffect(() => {
+  loadTrendingMovies();
+},[])
 
 
 
@@ -121,12 +137,27 @@ fetchMovies(debouncedSearchTerm);
       
      <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
      
-     <h2 className="text-gradient">All Movies</h2>
-     <p>Loading state: {String(loading)}</p>
+    
      </header>
 
+     {trendingMovies.length > 0 && (
+      <section className="trending">
+        <h2 className="text-gradient">Trending Movies</h2>
+        
+        <ul>
+          {trendingMovies.map((movie, index) => (
+            <li key={movie.$id} >
+              <p> {index + 1} {movie.title}</p>
+              <img src={movie.poster_url} alt={movie.title} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
 
      <section className="all-movies">
+       <h2 className="text-gradient">All Movies</h2>
+     <p>Loading state: {String(loading)}</p>
       {
         loading ? (
           <Spinner />
