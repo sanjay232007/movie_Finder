@@ -1,12 +1,15 @@
 import { useEffect,useState } from 'react'
-import heroImg from './assets/hero.png'
 
+import {useDebounce} from 'react-use'
+
+import { updateSearchCount } from './appwrite.js'
 
 import './App.css'
 import BG from '/BG.png'
 import Search from  './components/Search.jsx'
 import Spinner from './components/Spinner.jsx'
 import MovieCard from './components/MovieCard.jsx'
+
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -42,15 +45,22 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [movieList, setMovieList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+
+useDebounce(
+  () => setDebouncedSearchTerm(searchTerm),1000,[searchTerm]
+  )
 
 
 
-const fetchMovies = async (searchTerm) => {
+const fetchMovies = async (query ='') => {
   setLoading(true);
   setErrorMessage('');
 
     try{
-      const endpoint=`${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+      const endpoint=query ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
+      : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
 
       const response = await fetch(endpoint,API_OPTIONS);
       //alert(response);
@@ -65,12 +75,15 @@ const fetchMovies = async (searchTerm) => {
       //console.log('API Response:', data);
       
 
-      if(data.response=='false'){
+     /* if(data.response=='false'){
       setErrorMessage(data.Error || 'Failed to fetch movies from api');
       setMovieList([]);
       return;
 
-    }
+    }*/
+     if(query && data.results?.length > 0){
+     await updateSearchCount(query,data.results[0]);
+     }
     }
     
 
@@ -87,9 +100,9 @@ const fetchMovies = async (searchTerm) => {
 
 
  useEffect(() => {
-fetchMovies();
+fetchMovies(debouncedSearchTerm);
 
-},[])
+},[debouncedSearchTerm])
 
 
 
@@ -107,6 +120,7 @@ fetchMovies();
         <h1>Movies <span className="text-gradient">Finder</span> to find the best movies</h1>
       
      <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+     
      <h2 className="text-gradient">All Movies</h2>
      <p>Loading state: {String(loading)}</p>
      </header>
