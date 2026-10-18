@@ -156,8 +156,8 @@ useEffect(() => {
     )}
 
      <section className="all-movies">
-       <h2 className="text-gradient">All Movies</h2>
      <p>Loading state: {String(loading)}</p>
+       <h2 className="text-gradient">All Movies</h2>
       {
         loading ? (
           <Spinner />
